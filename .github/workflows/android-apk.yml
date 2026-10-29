@@ -1,0 +1,55 @@
+name: APK de Android
+
+# Se ejecuta a mano desde la pestaña Actions → "APK de Android" → Run workflow.
+# Firma: si existen los secretos ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+# ANDROID_KEY_ALIAS y ANDROID_KEY_PASSWORD, el APK queda firmado siempre con la misma llave
+# (se puede actualizar sin perder datos). Sin ellos se firma con una llave de depuración
+# distinta en cada ejecución: sirve para probar, pero no para el celular de uso diario.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPO_NO_TELEMETRY: 1
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v5
+      - run: npm ci
+      - name: Proyecto nativo
+        run: npx expo prebuild --platform android --no-install
+      - name: Compilar APK (release)
+        working-directory: android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/jardin.jks"
+            ./gradlew assembleRelease --no-daemon \
+              -Pandroid.injected.signing.store.file="$RUNNER_TEMP/jardin.jks" \
+              -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+              -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+              -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          else
+            echo "::warning::Sin secretos de firma: APK firmado con llave de depuración (solo para pruebas)."
+            ./gradlew assembleRelease --no-daemon
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jardin-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          retention-days: 14

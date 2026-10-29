@@ -352,4 +352,37 @@ eas build -p android --profile preview   # APK instalable
 - [x] Hito 5 — Hábitos
 - [x] Hito 6 — Jardín
 - [x] Hito 7 — Exportar
-- [ ] Hito 8 — Build
+- [ ] Hito 8 — Build (configurado: `eas.json` perfil `preview` APK y workflow de GitHub Actions; falta el primer build y probar en el celular)
+
+## 16. Notas de implementación
+
+Decisiones tomadas al construir el MVP (mantenerlas salvo que se decida otra cosa):
+
+- **Versiones:** Expo SDK 58, React Native 0.88 (nueva arquitectura, Hermes), React 19.3, TypeScript 6.
+  Rutas en `app/` en la raíz. No crear `src/app/`: expo-router la usaría como raíz de rutas.
+- **Abrir la base:** `openDatabase()` (`src/db/client.ts`) se llama una vez en `app/_layout.tsx`, abre SQLite,
+  aplica las migraciones y deja listo `db` (un proxy sobre Drizzle). Es una sola promesa: React en modo
+  estricto ejecuta los efectos dos veces y dos migraciones simultáneas corrompen la apertura.
+- **Reactividad:** las lecturas usan `useDbQuery(() => …, deps)` y cada escritura en `src/db/*` llama a
+  `notifyDbChange()` (contador en Zustand). Escrituras de texto mientras se escribe usan `{ silent: true }`.
+- **Migraciones:** editar `src/db/schema.ts` → `npm run db:generate` → commit de `src/db/migrations/`.
+  `SCHEMA_VERSION` (respaldo JSON) = número de migraciones del journal.
+- **Zona horaria:** desplazamiento fijo UTC−5 en `src/domain/dates.ts` (Bogotá no tiene horario de verano),
+  sin depender de Intl. `occurred_at` se guarda con `-05:00`; `created_at`/`updated_at` en UTC.
+- **Racha flexible:** cuenta los periodos cumplidos (hecho o mínimo) de la racha actual; se rompe con dos
+  periodos programados seguidos sin cumplir. Hoy sin marcar, la semana en curso sin completar y la semana
+  parcial de inicio no cuentan en contra.
+- **Jardín:** el crecimiento usa el máximo histórico por área guardado en `settings` (`garden_max:<área>`),
+  así nunca retrocede aunque se borre un hábito. "Terreno sin sembrar" = sin hábitos activos y sin
+  crecimiento previo. En hábitos de X veces por semana la hidratación prorratea la meta por los días activos.
+- **Borradores:** `useDraftState` los guarda en `settings` con claves `draft:*`, que no viajan en el respaldo.
+- **Recordatorios:** `src/notifications/`. Cada notificación semanal tiene id `habit:<id>:<día>` y una firma
+  en `data.sig`; `syncHabitReminders()` concilia al abrir la app y después de crear, editar, archivar o borrar.
+  Los botones "Hecho"/"Mínimo" marcan el día en que se mostró la notificación.
+- **Privacidad:** `android.allowBackup = false` (nada se sube a la copia de Google), permisos de
+  almacenamiento y ventana flotante bloqueados, sin expo-updates ni analítica.
+- **Web solo para pruebas:** sirve para probar flujos en el navegador (Chromium con
+  `--enable-features=SharedArrayBuffer`). En pruebas automatizadas conviene anular `Atomics.pause`, porque
+  expo-sqlite web corta muy rápido las operaciones síncronas. Notificaciones, PDF y compartir son solo Android.
+- **Docs de Expo:** en la sesión en la nube docs.expo.dev no era accesible; las APIs se verificaron contra los
+  tipos instalados en `node_modules`. Antes de cambiar de SDK, revisar la documentación de la versión.
