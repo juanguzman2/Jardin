@@ -1,6 +1,7 @@
 name: APK de Android
 
-# Se ejecuta a mano desde la pestaña Actions → "APK de Android" → Run workflow.
+# Se ejecuta a mano desde la pestaña Actions → "APK de Android" → Run workflow, y
+# al hacer push a main de cambios que afectan lo nativo (dependencias, app.json).
 # Firma: si existen los secretos ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
 # ANDROID_KEY_ALIAS y ANDROID_KEY_PASSWORD, el APK queda firmado siempre con la misma llave
 # (se puede actualizar sin perder datos). Sin ellos se firma con una llave de depuración
@@ -8,6 +9,13 @@ name: APK de Android
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - package-lock.json
+      - app.json
+      - .github/workflows/android-apk.yml
 
 jobs:
   apk:
