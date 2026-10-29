@@ -11,6 +11,7 @@ export const DB_NAME = 'jardin.db';
 type Drizzle = ReturnType<typeof drizzle<typeof schema>>;
 
 let instance: { sqlite: SQLiteDatabase; db: Drizzle } | null = null;
+let opening: Promise<void> | null = null;
 
 /**
  * Abre la base y aplica las migraciones pendientes. Se llama una vez al arrancar
@@ -18,8 +19,16 @@ let instance: { sqlite: SQLiteDatabase; db: Drizzle } | null = null;
  * En web (solo para pruebas en el navegador) se abre primero en modo asíncrono para
  * esperar a que el worker de SQLite cargue.
  */
-export async function openDatabase(): Promise<void> {
-  if (instance) return;
+export function openDatabase(): Promise<void> {
+  // Una sola apertura aunque el efecto se ejecute dos veces (StrictMode en desarrollo).
+  opening ??= open().catch((e: unknown) => {
+    opening = null;
+    throw e;
+  });
+  return opening;
+}
+
+async function open(): Promise<void> {
   if (Platform.OS === 'web') {
     const warmup = await openDatabaseAsync(DB_NAME);
     await warmup.closeAsync();
