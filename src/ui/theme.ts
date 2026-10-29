@@ -17,6 +17,7 @@ export interface Palette {
   primaryText: string;
   primarySoft: string;
   toward: string;
+  minimal: string;
   away: string;
   neutral: string;
   dry: string;
@@ -37,6 +38,7 @@ const light: Palette = {
   primaryText: '#FFFFFF',
   primarySoft: '#DCEFE4',
   toward: '#2E7A57',
+  minimal: '#5FA582',
   away: '#B4782A',
   neutral: '#8A918D',
   dry: '#D3D6D3',
@@ -57,6 +59,7 @@ const dark: Palette = {
   primaryText: '#0D1A13',
   primarySoft: '#1E3A2C',
   toward: '#5DB88C',
+  minimal: '#3E8F69',
   away: '#DDA65C',
   neutral: '#8C9590',
   dry: '#3A423E',

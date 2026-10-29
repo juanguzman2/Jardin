@@ -349,7 +349,7 @@ eas build -p android --profile preview   # APK instalable
 - [x] Hito 2 — Dominio
 - [x] Hito 3 — Hoy
 - [x] Hito 4 — Auto-registro y Patrones
-- [ ] Hito 5 — Hábitos
-- [ ] Hito 6 — Jardín
+- [x] Hito 5 — Hábitos
+- [x] Hito 6 — Jardín
 - [ ] Hito 7 — Exportar
 - [ ] Hito 8 — Build

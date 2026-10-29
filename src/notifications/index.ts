@@ -3,10 +3,10 @@ import { Platform } from 'react-native';
 
 import { es } from '../copy/es';
 import { toBogota } from '../domain/dates';
-import { isScheduled, parseWeekdays } from '../domain/habits';
+import { isScheduled } from '../domain/habits';
 import { getHabit, listHabits, setCheck } from '../db/habits';
-import type { Habit } from '../db/schema';
 import { SETTING_KEYS, setSetting } from '../db/settings';
+import { desiredReminders, REMINDER_ID_PREFIX } from './schedule';
 
 /*
  * Recordatorios por hábito: notificaciones locales semanales (sin push, sin red).
@@ -16,7 +16,6 @@ import { SETTING_KEYS, setSetting } from '../db/settings';
 
 const CHANNEL_ID = 'habit-reminders';
 const CATEGORY_ID = 'habit_reminder';
-const ID_PREFIX = 'habit:';
 export const ACTION_DONE = 'done';
 export const ACTION_MINIMAL = 'minimal';
 
@@ -70,58 +69,12 @@ export async function ensurePermission(): Promise<boolean> {
   return asked.status === 'granted';
 }
 
-interface DesiredReminder {
-  identifier: string;
-  sig: string;
-  habitId: string;
-  title: string;
-  body: string;
-  /** Formato de expo-notifications: 1 = domingo … 7 = sábado. */
-  weekday: number;
-  hour: number;
-  minute: number;
-}
-
-/** Lunes = 1 … domingo = 7  →  domingo = 1 … sábado = 7. */
-export function toExpoWeekday(mondayFirst: number): number {
-  return mondayFirst === 7 ? 1 : mondayFirst + 1;
-}
-
-/** Días (lunes = 1) en que suena el recordatorio de un hábito. */
-export function reminderDays(habit: Habit): number[] {
-  const explicit = parseWeekdays(habit.reminderWeekdays);
-  if (explicit.length > 0) return explicit;
-  if (habit.frequencyType === 'weekdays') return parseWeekdays(habit.weekdays);
-  return [1, 2, 3, 4, 5, 6, 7];
-}
-
-function desiredFor(habit: Habit): DesiredReminder[] {
-  if (habit.archived || !habit.reminderTime) return [];
-  const [h, m] = habit.reminderTime.split(':').map(Number);
-  if (h === undefined || m === undefined || Number.isNaN(h) || Number.isNaN(m)) return [];
-  const title = habit.name;
-  const body = habit.ifThen?.trim() || habit.minimalVersion?.trim() || es.habits.notWateredToday;
-  return reminderDays(habit).map((day) => {
-    const weekday = toExpoWeekday(day);
-    return {
-      identifier: `${ID_PREFIX}${habit.id}:${day}`,
-      sig: JSON.stringify([title, body, weekday, h, m]),
-      habitId: habit.id,
-      title,
-      body,
-      weekday,
-      hour: h,
-      minute: m,
-    };
-  });
-}
-
 /** Reprograma todos los recordatorios para que coincidan con los hábitos guardados. */
 export async function syncHabitReminders(): Promise<void> {
   if (!notificationsSupported) return;
-  const desired = listHabits({ includeArchived: true }).flatMap(desiredFor);
+  const desired = listHabits({ includeArchived: true }).flatMap(desiredReminders);
   const scheduled = (await Notifications.getAllScheduledNotificationsAsync()).filter((n) =>
-    n.identifier.startsWith(ID_PREFIX),
+    n.identifier.startsWith(REMINDER_ID_PREFIX),
   );
   const wanted = new Map(desired.map((d) => [d.identifier, d]));
 
