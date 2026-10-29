@@ -1,12 +1,13 @@
-import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { es } from '../../copy/es';
 import { useDbQuery } from '../../db/live';
 import { getSetting, SETTING_KEYS } from '../../db/settings';
 import { backupReminder } from '../../domain/backup';
+import { exportBackup } from '../../export/backup';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
+import { toast } from '../../ui/feedback';
 import { T } from '../../ui/Text';
 import { spacing, useTheme } from '../../ui/theme';
 
@@ -24,7 +25,7 @@ export function BackupBanner({ today }: { today: string }) {
         {reminder.never ? es.today.backupNever : es.today.backupReminder(reminder.days)}
       </T>
       <View>
-        <Button small kind="ghost" label={es.today.backupAction} onPress={() => router.push('/settings')} />
+        <Button small kind="ghost" label={es.today.backupAction} onPress={() => exportBackup().then(() => toast(es.settings.exportDone)).catch(() => undefined)} />
       </View>
     </Card>
   );
