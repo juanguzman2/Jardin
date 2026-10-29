@@ -11,7 +11,8 @@ export function Screen({ children, footer, padBottom = 96 }: { children: ReactNo
   return (
     <KeyboardAvoidingView
       style={[styles.flex, { backgroundColor: c.bg }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // Con edge-to-edge (Android 15+, activo por defecto) la ventana ya no se redimensiona con el teclado.
+      behavior={Platform.OS === 'web' ? undefined : 'padding'}
     >
       <ScrollView
         style={styles.flex}
