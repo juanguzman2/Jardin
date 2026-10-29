@@ -33,7 +33,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: es.tabs.today, tabBarIcon: ({ color }) => <SunIcon color={String(color)} /> }}
+        options={{ title: es.tabs.today, headerTitle: es.appName, tabBarIcon: ({ color }) => <SunIcon color={String(color)} /> }}
       />
       <Tabs.Screen
         name="habits"

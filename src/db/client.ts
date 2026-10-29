@@ -20,7 +20,10 @@ let instance: { sqlite: SQLiteDatabase; db: Drizzle } | null = null;
  */
 export async function openDatabase(): Promise<void> {
   if (instance) return;
-  if (Platform.OS === 'web') await openDatabaseAsync(DB_NAME);
+  if (Platform.OS === 'web') {
+    const warmup = await openDatabaseAsync(DB_NAME);
+    await warmup.closeAsync();
+  }
   const sqlite = openDatabaseSync(DB_NAME);
   sqlite.execSync('PRAGMA foreign_keys = ON;');
   const db = drizzle(sqlite, { schema });

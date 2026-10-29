@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { es } from '../copy/es';
 import { addDays } from '../domain/dates';
 import { IconButton } from './Button';
-import { relativeDayLabel } from './format';
+import { formatDayLong, relativeDayLabel } from './format';
 import { ChevronIcon } from './icons';
 import { T } from './Text';
 import { spacing, useTheme } from './theme';
@@ -27,6 +27,9 @@ export function DayNav({ day, today, onChange }: { day: string; today: string; o
         <T variant="heading" style={styles.label}>
           {relativeDayLabel(day, today)}
         </T>
+        {isToday || day === addDays(today, -1) ? (
+          <T variant="small">{formatDayLong(day)}</T>
+        ) : null}
         {!isToday ? (
           <T variant="small" color={c.primary}>
             {es.common.goToday}

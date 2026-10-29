@@ -114,6 +114,9 @@ export const es = {
       empty: 'Aún no hay nada registrado. Usa el botón + para anotar lo que hiciste o pensaste.',
       balance: 'Balance del día',
       balanceEmpty: 'Etiqueta tus acciones como “me acerca” o “me aleja” para ver el balance.',
+      balanceLabel: (toward: number, away: number) =>
+        `${toward} ${toward === 1 ? 'me acerca' : 'me acercan'} · ${away} ${away === 1 ? 'me aleja' : 'me alejan'}`,
+      more: 'Opciones',
       itemMenuTitle: 'Este momento',
     },
     closing: {
