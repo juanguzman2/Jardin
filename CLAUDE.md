@@ -250,7 +250,7 @@ habits           (id, name, area_id FK, value_text, frequency_type: 'daily'|'wee
                   times_per_week INT NULL, minimal_version, if_then,
                   reminder_time NULL, reminder_weekdays NULL,
                   rule_id NULL FK, auto_link: 'opening'|'closing' NULL,
-                  start_date, phase INT NULL, archived BOOL, sort_order)
+                  start_date, end_date NULL, phase INT NULL, archived BOOL, sort_order)
 habit_checks     (habit_id FK, date, status: 'done'|'minimal'|'no', note NULL,
                   PRIMARY KEY (habit_id, date))
 obstacle_notes   (id, habit_id FK, date, text)                       -- de la tarjeta de 2 días seguidos
@@ -375,6 +375,10 @@ Decisiones tomadas al construir el MVP (mantenerlas salvo que se decida otra cos
 - **Jardín:** el crecimiento usa el máximo histórico por área guardado en `settings` (`garden_max:<área>`),
   así nunca retrocede aunque se borre un hábito. "Terreno sin sembrar" = sin hábitos activos y sin
   crecimiento previo. En hábitos de X veces por semana la hidratación prorratea la meta por los días activos.
+- **Duración de hábitos:** `habits.end_date` (migración `0001`) es el último día en que se repite; null = sin
+  fin. Fuera de `start_date…end_date` el hábito no está programado: no sale en el riego del día, no cuenta
+  para la racha ni la hidratación y no programa recordatorios. En la lista de Hábitos aparece en
+  "Archivados, terminados o por empezar". Borrar y archivar también están en el menú "⋯" de cada tarjeta.
 - **Borradores:** `useDraftState` los guarda en `settings` con claves `draft:*`, que no viajan en el respaldo.
 - **Recordatorios:** `src/notifications/`. Cada notificación semanal tiene id `habit:<id>:<día>` y una firma
   en `data.sig`; `syncHabitReminders()` concilia al abrir la app y después de crear, editar, archivar o borrar.
@@ -384,5 +388,13 @@ Decisiones tomadas al construir el MVP (mantenerlas salvo que se decida otra cos
 - **Web solo para pruebas:** sirve para probar flujos en el navegador (Chromium con
   `--enable-features=SharedArrayBuffer`). En pruebas automatizadas conviene anular `Atomics.pause`, porque
   expo-sqlite web corta muy rápido las operaciones síncronas. Notificaciones, PDF y compartir son solo Android.
+- **Horas y fechas sin escribir:** las horas se eligen con `TimeWheel` (ruedas de hora 1–12, minutos y
+  a. m./p. m., con atajos "Ahora / Hace 15 min…") y las fechas con `DateStepper` (flechas). Se guarda siempre
+  `HH:mm` en 24 h; en pantalla y en el PDF se muestra en 12 h con `formatTime12`.
+- **Build rápido:** `expo-build-properties` compila solo `arm64-v8a` (celulares Android actuales; el APK no
+  instala en equipos de 32 bits ni en emuladores x86). `react-native-reanimated`, `react-native-worklets` y
+  `react-native-gesture-handler` llegan como dependencias de expo-router pero la app no los usa: están
+  excluidos del autolinking en `package.json` (`expo.autolinking.exclude`). Si algún día se usan (p. ej. el
+  Drawer de expo-router o animaciones con Reanimated), hay que quitarlos de esa lista.
 - **Docs de Expo:** en la sesión en la nube docs.expo.dev no era accesible; las APIs se verificaron contra los
   tipos instalados en `node_modules`. Antes de cambiar de SDK, revisar la documentación de la versión.

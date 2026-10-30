@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import { es as dfEs } from 'date-fns/locale';
 
 import { es } from '../copy/es';
-import { addDays, isoToBogota } from '../domain/dates';
+import { addDays, isoToBogota, to12h } from '../domain/dates';
 
 /** Fecha local solo para formatear (los cálculos se hacen con cadenas `YYYY-MM-DD`). */
 function toLocalDate(day: string): Date {
@@ -38,10 +38,16 @@ export function relativeDayLabel(day: string, today: string): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-/** "29 oct · 14:30" para un ISO cualquiera, en hora de Bogotá. */
+/** "19:05" → "7:05 p. m." */
+export function formatTime12(time: string): string {
+  const { hour, minute, period } = to12h(time);
+  return `${hour}:${String(minute).padStart(2, '0')} ${period === 'am' ? es.time.am : es.time.pm}`;
+}
+
+/** "29 oct · 2:30 p. m." para un ISO cualquiera, en hora de Bogotá. */
 export function formatMoment(iso: string): string {
   const { date, time } = isoToBogota(iso);
-  return `${formatDayShort(date)} · ${time}`;
+  return `${formatDayShort(date)} · ${formatTime12(time)}`;
 }
 
 export const WEEKDAY_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;

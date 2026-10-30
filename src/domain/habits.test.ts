@@ -1,6 +1,8 @@
 import { addDays } from './dates';
 import {
   computeFlexibleStreak,
+  habitDayOf,
+  habitPhase,
   hasFirmRoots,
   isScheduled,
   parseWeekdays,
@@ -218,5 +220,42 @@ describe('weeklyCompliance', () => {
 
   it('null si el hábito no había empezado', () => {
     expect(weeklyCompliance(daily({ startDate: '2026-11-01' }), [], '2026-10-05', '2026-10-20')).toBeNull();
+  });
+});
+
+describe('hábitos con fecha de fin (se repiten durante varios días)', () => {
+  const h = daily({ startDate: '2026-10-01', endDate: '2026-10-07' }); // 7 días
+
+  it('solo está programado dentro del periodo', () => {
+    expect(isScheduled(h, '2026-09-30')).toBe(false);
+    expect(isScheduled(h, '2026-10-01')).toBe(true);
+    expect(isScheduled(h, '2026-10-07')).toBe(true);
+    expect(isScheduled(h, '2026-10-08')).toBe(false);
+  });
+
+  it('después del final no se pierde la racha ni pide atención', () => {
+    const r = computeFlexibleStreak(h, seq('2026-10-01', 'ddddddd'), '2026-10-20');
+    expect(r).toMatchObject({ current: 7, longest: 7, needsAttention: false });
+  });
+
+  it('fase y "día n de total"', () => {
+    expect(habitPhase(h, '2026-09-30')).toBe('upcoming');
+    expect(habitPhase(h, '2026-10-03')).toBe('active');
+    expect(habitPhase(h, '2026-10-08')).toBe('finished');
+    expect(habitDayOf(h, '2026-10-03')).toEqual({ day: 3, total: 7 });
+    expect(habitDayOf(h, '2026-10-08')).toBeNull();
+    expect(habitDayOf(daily(), '2026-10-03')).toBeNull();
+  });
+
+  it('el cumplimiento semanal solo cuenta hasta el último día', () => {
+    // semana del lunes 5 al domingo 11; el hábito termina el miércoles 7
+    expect(weeklyCompliance(h, seq('2026-10-05', 'ddd'), '2026-10-05', '2026-10-20')).toEqual({ fulfilled: 3, expected: 3 });
+  });
+
+  it('X veces por semana: la semana final parcial no cuenta en contra', () => {
+    const w = daily({ frequencyType: 'times_per_week', timesPerWeek: 3, startDate: '2026-10-05', endDate: '2026-10-14' });
+    const checks = [...seq('2026-10-05', 'ddd'), ...seq('2026-10-12', 'd')];
+    const r = computeFlexibleStreak(w, checks, '2026-10-30');
+    expect(r).toMatchObject({ current: 1, needsAttention: false });
   });
 });

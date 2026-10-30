@@ -18,6 +18,8 @@ export interface HabitLike {
   weekdays: string | null;
   timesPerWeek: number | null;
   startDate: string;
+  /** Último día en que se repite (inclusive); null o ausente = sin fin. */
+  endDate?: string | null;
   archived: boolean;
 }
 

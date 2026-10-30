@@ -34,8 +34,9 @@ export function reminderDays(habit: Habit): number[] {
   return [1, 2, 3, 4, 5, 6, 7];
 }
 
-export function desiredReminders(habit: Habit): DesiredReminder[] {
+export function desiredReminders(habit: Habit, today: string): DesiredReminder[] {
   if (habit.archived || !habit.reminderTime) return [];
+  if (habit.endDate && habit.endDate < today) return []; // ya terminó su periodo
   const [h, m] = habit.reminderTime.split(':').map(Number);
   if (h === undefined || m === undefined || Number.isNaN(h) || Number.isNaN(m)) return [];
   const title = habit.name;

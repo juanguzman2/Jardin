@@ -1,5 +1,8 @@
 import {
   addDays,
+  addMinutes,
+  from12h,
+  to12h,
   bogotaIso,
   currentTime,
   daysBetween,
@@ -52,5 +55,35 @@ describe('fechas en Bogotá', () => {
     expect(normalizeTime('21')).toBe('21:00');
     expect(normalizeTime('25:00')).toBeNull();
     expect(normalizeTime('hola')).toBeNull();
+  });
+});
+
+describe('formato de 12 horas', () => {
+  it('convierte de 24 h a 12 h', () => {
+    expect(to12h('00:00')).toEqual({ hour: 12, minute: 0, period: 'am' });
+    expect(to12h('07:05')).toEqual({ hour: 7, minute: 5, period: 'am' });
+    expect(to12h('12:30')).toEqual({ hour: 12, minute: 30, period: 'pm' });
+    expect(to12h('19:45')).toEqual({ hour: 7, minute: 45, period: 'pm' });
+  });
+
+  it('convierte de 12 h a 24 h', () => {
+    expect(from12h(12, 0, 'am')).toBe('00:00');
+    expect(from12h(12, 15, 'pm')).toBe('12:15');
+    expect(from12h(7, 5, 'pm')).toBe('19:05');
+    expect(from12h(11, 59, 'pm')).toBe('23:59');
+  });
+
+  it('ida y vuelta para todas las horas', () => {
+    for (let h = 0; h < 24; h++) {
+      const t = `${String(h).padStart(2, '0')}:30`;
+      const { hour, minute, period } = to12h(t);
+      expect(from12h(hour, minute, period)).toBe(t);
+    }
+  });
+
+  it('suma y resta minutos dando la vuelta a la medianoche', () => {
+    expect(addMinutes('10:00', -15)).toBe('09:45');
+    expect(addMinutes('00:10', -30)).toBe('23:40');
+    expect(addMinutes('23:50', 20)).toBe('00:10');
   });
 });

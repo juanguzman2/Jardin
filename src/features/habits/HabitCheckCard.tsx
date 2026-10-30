@@ -3,12 +3,15 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { es } from '../../copy/es';
-import { setCheck, setCheckNote } from '../../db/habits';
+import { deleteHabit, setCheck, setCheckNote, updateHabit } from '../../db/habits';
 import type { Habit, HabitCheck } from '../../db/schema';
 import { currentTime, mondayOf } from '../../domain/dates';
-import { computeFlexibleStreak, hasFirmRoots, isFulfilled, weeklyCompliance } from '../../domain/habits';
+import { computeFlexibleStreak, habitDayOf, hasFirmRoots, isFulfilled, weeklyCompliance } from '../../domain/habits';
 import type { CheckStatus } from '../../domain/types';
+import { syncHabitReminders } from '../../notifications';
+import { ActionMenu } from '../../ui/ActionMenu';
 import { Card } from '../../ui/Card';
+import { confirm, toast } from '../../ui/feedback';
 import { AutoSaveField } from '../../ui/Field';
 import { T } from '../../ui/Text';
 import { radius, spacing, touch, useTheme } from '../../ui/theme';
@@ -75,6 +78,20 @@ export function HabitCheckCard({
   const weekly =
     habit.frequencyType === 'times_per_week' ? weeklyCompliance(habit, checks, mondayOf(day), day) : null;
   const [noteOpen, setNoteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dayOf = habitDayOf(habit, day);
+
+  const edit = () => router.push({ pathname: '/habit/[id]', params: { id: habit.id } });
+  const archive = () => {
+    updateHabit(habit.id, { archived: true });
+    syncHabitReminders().catch(() => undefined);
+    toast(es.common.archived);
+  };
+  const remove = async () => {
+    if (!(await confirm({ title: es.habits.deleteTitle(habit.name), message: es.habitForm.deleteBody }))) return;
+    deleteHabit(habit.id);
+    syncHabitReminders().catch(() => undefined);
+  };
 
   const mark = (next: CheckStatus) => {
     const value = status === next ? null : next;
@@ -86,22 +103,39 @@ export function HabitCheckCard({
 
   return (
     <Card>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${es.common.edit}: ${habit.name}`}
-        onPress={() => router.push({ pathname: '/habit/[id]', params: { id: habit.id } })}
-        style={styles.header}
-      >
-        <View style={styles.flex}>
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${es.common.edit}: ${habit.name}`}
+          onPress={edit}
+          onLongPress={() => setMenuOpen(true)}
+          style={styles.flex}
+        >
           <T variant="heading">{habit.name}</T>
           <T variant="small">
-            {[areaName, es.habits.streak(streak.current, streak.unit), es.habits.longest(streak.longest)]
+            {[
+              areaName,
+              dayOf ? es.habits.dayOf(dayOf.day, dayOf.total) : null,
+              es.habits.streak(streak.current, streak.unit),
+              es.habits.longest(streak.longest),
+            ]
               .filter(Boolean)
               .join(' · ')}
           </T>
-        </View>
+        </Pressable>
         {firm ? <Badge label={es.habits.firmRoots} /> : null}
-      </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${es.habits.options}: ${habit.name}`}
+          onPress={() => setMenuOpen(true)}
+          hitSlop={10}
+          style={styles.dots}
+        >
+          <T variant="heading" color={c.muted}>
+            ⋯
+          </T>
+        </Pressable>
+      </View>
 
       {habit.minimalVersion ? (
         <T variant="small">
@@ -147,6 +181,16 @@ export function HabitCheckCard({
           </Pressable>
         )
       ) : null}
+      <ActionMenu
+        visible={menuOpen}
+        title={habit.name}
+        onClose={() => setMenuOpen(false)}
+        actions={[
+          { label: es.common.edit, onPress: edit },
+          { label: es.habits.archive, onPress: archive },
+          { label: es.common.delete, destructive: true, onPress: () => void remove() },
+        ]}
+      />
     </Card>
   );
 }
@@ -154,6 +198,7 @@ export function HabitCheckCard({
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   flex: { flex: 1, gap: 2 },
+  dots: { paddingHorizontal: spacing.xs, minHeight: 32, justifyContent: 'center' },
   reminder: { borderRadius: radius.sm, padding: spacing.sm },
   reminderText: { fontWeight: '600' },
   buttons: { flexDirection: 'row', gap: spacing.sm },

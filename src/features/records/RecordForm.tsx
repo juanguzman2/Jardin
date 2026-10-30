@@ -11,10 +11,12 @@ import type { Direction, FollowedRule } from '../../domain/types';
 import { Button } from '../../ui/Button';
 import { Collapsible } from '../../ui/Card';
 import { ChoiceChips, ScalePicker } from '../../ui/Choice';
+import { DateStepper } from '../../ui/DateStepper';
 import { confirm } from '../../ui/feedback';
 import { Field } from '../../ui/Field';
 import { Screen } from '../../ui/Screen';
 import { T } from '../../ui/Text';
+import { TimeWheel } from '../../ui/TimeWheel';
 import { spacing, useTheme } from '../../ui/theme';
 import { DraftBanner } from '../common/DraftBanner';
 import { useAreas } from '../common/useAreas';
@@ -178,27 +180,8 @@ export function RecordForm({ id, date }: { id: string; date?: string }) {
           multiline
         />
         <View style={styles.block}>
-          <T style={styles.label}>{es.recordForm.when}</T>
-          <View style={styles.row}>
-            <View style={styles.flex}>
-              <Field
-                accessibilityLabel={es.recordForm.date}
-                value={f.date}
-                onChangeText={(d) => draft.set({ date: d })}
-                maxLength={10}
-                keyboardType="numbers-and-punctuation"
-              />
-            </View>
-            <View style={styles.time}>
-              <Field
-                accessibilityLabel={es.timelineForm.time}
-                value={f.time}
-                onChangeText={(time) => draft.set({ time })}
-                maxLength={5}
-                keyboardType="numbers-and-punctuation"
-              />
-            </View>
-          </View>
+          <DateStepper label={es.recordForm.when} value={f.date} onChange={(d) => draft.set({ date: d })} max={today()} />
+          <TimeWheel value={normalizeTime(f.time) ?? currentTime()} onChange={(time) => draft.set({ time })} shortcuts />
           {errors.when ? (
             <T variant="small" color={c.away}>
               {errors.when}
@@ -293,7 +276,6 @@ export function RecordForm({ id, date }: { id: string; date?: string }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   flex: { flex: 1 },
-  time: { width: 96 },
   block: { gap: spacing.sm },
   label: { fontWeight: '600' },
 });

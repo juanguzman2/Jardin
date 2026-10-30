@@ -7,7 +7,7 @@ import { listChecks, listHabits } from '../../db/habits';
 import { useDbQuery } from '../../db/live';
 import { addDays, mondayOf } from '../../domain/dates';
 import { type AreaDayStatus, areaDayStatus, daysToNextStage, gardenStage } from '../../domain/garden';
-import { computeFlexibleStreak, hasFirmRoots, weeklyCompliance } from '../../domain/habits';
+import { computeFlexibleStreak, habitPhase, hasFirmRoots, weeklyCompliance } from '../../domain/habits';
 import { Button } from '../../ui/Button';
 import { Card, SectionTitle } from '../../ui/Card';
 import { formatDayShort, WEEKDAY_SHORT } from '../../ui/format';
@@ -97,6 +97,7 @@ export function AreaDetail({ id }: { id: string }) {
                     {h.name}
                   </T>
                   {hasFirmRoots(h, checks) ? <Badge label={es.habits.firmRoots} /> : null}
+                  {habitPhase(h, today) === 'finished' ? <Badge label={es.habits.finished} tone="muted" /> : null}
                 </View>
                 <T variant="small">
                   {es.habits.streak(streak.current, streak.unit)} · {es.habits.longest(streak.longest)}

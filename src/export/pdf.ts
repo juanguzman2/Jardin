@@ -62,7 +62,12 @@ export function collectPdfData(o: PdfOptions): PdfData {
     habits = {
       weeks,
       rows: listHabits({ includeArchived: true })
-        .filter((h) => h.startDate <= o.to && (!h.archived || checks.some((c) => c.habitId === h.id && c.date >= o.from && c.date <= o.to)))
+        .filter(
+          (h) =>
+            h.startDate <= o.to &&
+            (!h.endDate || h.endDate >= o.from) &&
+            (!h.archived || checks.some((c) => c.habitId === h.id && c.date >= o.from && c.date <= o.to)),
+        )
         .map((h) => ({
           name: h.name,
           area: areaName.get(h.areaId) ?? '',

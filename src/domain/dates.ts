@@ -129,3 +129,28 @@ export function normalizeTime(input: string): string | null {
   if (h > 23 || m > 59) return null;
   return `${pad(h)}:${pad(m)}`;
 }
+
+/* Formato de 12 horas (solo para mostrar y elegir; se guarda siempre `HH:mm`). */
+
+export type Period = 'am' | 'pm';
+
+/** "19:05" → { hour: 7, minute: 5, period: 'pm' }. Medianoche es 12 a. m.; mediodía, 12 p. m. */
+export function to12h(time: string): { hour: number; minute: number; period: Period } {
+  const [h = 0, m = 0] = time.split(':').map(Number);
+  const period: Period = h >= 12 ? 'pm' : 'am';
+  const hour = h % 12 === 0 ? 12 : h % 12;
+  return { hour, minute: m, period };
+}
+
+/** (7, 5, 'pm') → "19:05". */
+export function from12h(hour: number, minute: number, period: Period): string {
+  const h24 = (hour % 12) + (period === 'pm' ? 12 : 0);
+  return `${pad(h24)}:${pad(minute)}`;
+}
+
+/** Suma (o resta) minutos a una hora `HH:mm`, dando la vuelta a la medianoche. */
+export function addMinutes(time: string, minutes: number): string {
+  const [h = 0, m = 0] = time.split(':').map(Number);
+  const total = (((h * 60 + m + minutes) % 1440) + 1440) % 1440;
+  return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
+}

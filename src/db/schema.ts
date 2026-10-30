@@ -148,6 +148,8 @@ export const habits = sqliteTable('habits', {
   ruleId: text('rule_id').references(() => verbalRules.id, { onDelete: 'set null' }),
   autoLink: text('auto_link').$type<AutoLink>(),
   startDate: text('start_date').notNull(),
+  /** Último día en que se repite (inclusive). Null = sin fecha de fin. */
+  endDate: text('end_date'),
   phase: integer('phase'),
   archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
   sortOrder: integer('sort_order').notNull().default(0),
