@@ -6,7 +6,7 @@ import { es } from '../../copy/es';
 import { createHabit, deleteHabit, getHabit, updateHabit } from '../../db/habits';
 import { useDbQuery } from '../../db/live';
 import { listRules } from '../../db/rules';
-import { isValidDay, normalizeTime, today } from '../../domain/dates';
+import { addDays, diffDays, isValidDay, maxDay, normalizeTime, today } from '../../domain/dates';
 import { formatWeekdays, parseWeekdays } from '../../domain/habits';
 import type { AutoLink, FrequencyType } from '../../domain/types';
 import { ensurePermission, notificationsSupported, syncHabitReminders } from '../../notifications';
@@ -16,7 +16,7 @@ import { ChoiceChips, MultiChips, ScalePicker } from '../../ui/Choice';
 import { DateStepper } from '../../ui/DateStepper';
 import { confirm } from '../../ui/feedback';
 import { Field } from '../../ui/Field';
-import { WEEKDAY_NAMES } from '../../ui/format';
+import { formatDayShort, WEEKDAY_NAMES } from '../../ui/format';
 import { Screen } from '../../ui/Screen';
 import { T } from '../../ui/Text';
 import { TimeWheel } from '../../ui/TimeWheel';
@@ -24,6 +24,21 @@ import { spacing, useTheme } from '../../ui/theme';
 import { useAreas } from '../common/useAreas';
 
 const WEEKDAY_OPTIONS = WEEKDAY_NAMES.map((label, i) => ({ value: i + 1, label }));
+
+/** Cuánto tiempo se repite el hábito: sin fin, N días o hasta una fecha. */
+type DurationMode = 'forever' | 7 | 21 | 30 | 66 | 'until';
+const DURATION_PRESETS = [7, 21, 30, 66] as const;
+
+function initialDuration(startDate: string, endDate: string | null | undefined): DurationMode {
+  if (!endDate) return 'forever';
+  const days = diffDays(startDate, endDate) + 1;
+  return (DURATION_PRESETS as readonly number[]).includes(days) ? (days as DurationMode) : 'until';
+}
+
+function joinDays(days: number[]): string {
+  const names = [...days].sort((a, b) => a - b).map((d) => WEEKDAY_NAMES[d - 1] ?? '');
+  return names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} y ${names.at(-1)}`;
+}
 
 function resync() {
   syncHabitReminders().catch(() => undefined);
@@ -51,6 +66,29 @@ export function HabitForm({ id, areaId: initialArea }: { id: string; areaId?: st
   const [ruleId, setRuleId] = useState<string | null>(existing?.ruleId ?? null);
   const [autoLink, setAutoLink] = useState<AutoLink | 'none'>(existing?.autoLink ?? 'none');
   const [startDate, setStartDate] = useState(existing?.startDate ?? today());
+  const [durationMode, setDurationMode] = useState<DurationMode>(() =>
+    initialDuration(existing?.startDate ?? today(), existing?.endDate),
+  );
+  const [untilDate, setUntilDate] = useState(existing?.endDate ?? addDays(existing?.startDate ?? today(), 29));
+  const endDate =
+    durationMode === 'forever'
+      ? null
+      : durationMode === 'until'
+        ? maxDay(untilDate, startDate)
+        : addDays(startDate, durationMode - 1);
+  const frequencyText =
+    frequencyType === 'daily'
+      ? es.habitForm.everyDay
+      : frequencyType === 'weekdays'
+        ? es.habitForm.onDays(joinDays(weekdays))
+        : es.habitForm.timesWeek(timesPerWeek ?? 1);
+  const todayStr = today();
+  const summary = es.habitForm.summary(
+    frequencyText,
+    startDate === todayStr ? es.common.today.toLowerCase() : `el ${formatDayShort(startDate)}`,
+    endDate ? `el ${formatDayShort(endDate)}` : null,
+    endDate ? diffDays(startDate, endDate) + 1 : null,
+  );
   const [phase, setPhase] = useState(existing?.phase != null ? String(existing.phase) : '');
   const [errors, setErrors] = useState<Partial<Record<'name' | 'area' | 'days' | 'reminder' | 'start', string>>>({});
 
@@ -86,6 +124,7 @@ export function HabitForm({ id, areaId: initialArea }: { id: string; areaId?: st
       ruleId,
       autoLink: autoLink === 'none' ? null : autoLink,
       startDate,
+      endDate,
       phase: phase.trim() && Number.isInteger(phaseNumber) ? phaseNumber : null,
       archived: existing?.archived ?? false,
     };
@@ -103,7 +142,8 @@ export function HabitForm({ id, areaId: initialArea }: { id: string; areaId?: st
   };
 
   const remove = async () => {
-    if (!existing || !(await confirm({ message: es.habitForm.deleteBody }))) return;
+    if (!existing || !(await confirm({ title: es.habits.deleteTitle(existing.name), message: es.habitForm.deleteBody })))
+      return;
     deleteHabit(existing.id);
     resync();
     router.back();
@@ -173,6 +213,27 @@ export function HabitForm({ id, areaId: initialArea }: { id: string; areaId?: st
           ) : null}
         </View>
 
+        <Card>
+          <DateStepper label={es.habitForm.startDate} value={startDate} onChange={setStartDate} />
+          <T style={styles.label}>{es.habitForm.duration}</T>
+          <ChoiceChips<DurationMode>
+            options={[
+              { value: 'forever', label: es.habitForm.durationForever },
+              ...DURATION_PRESETS.map((n) => ({ value: n, label: es.habitForm.durationDays(n) })),
+              { value: 'until', label: es.habitForm.durationUntil },
+            ]}
+            value={durationMode}
+            onChange={(v) => setDurationMode(v ?? 'forever')}
+            allowNone={false}
+          />
+          {durationMode === 'until' ? (
+            <DateStepper label={es.habitForm.endDate} value={maxDay(untilDate, startDate)} onChange={setUntilDate} min={startDate} />
+          ) : null}
+          <T variant="small" color={c.primary} style={styles.summary}>
+            {summary}
+          </T>
+        </Card>
+
         <Field
           label={es.habitForm.minimal}
           placeholder={es.habitForm.minimalPlaceholder}
@@ -238,7 +299,6 @@ export function HabitForm({ id, areaId: initialArea }: { id: string; areaId?: st
           />
         </View>
 
-        <DateStepper label={es.habitForm.startDate} value={startDate} onChange={setStartDate} />
         <View style={styles.row}>
           <View style={styles.phase}>
             <Field
@@ -259,7 +319,7 @@ export function HabitForm({ id, areaId: initialArea }: { id: string; areaId?: st
               label={existing.archived ? es.habitForm.unarchive : es.habitForm.archive}
               onPress={toggleArchived}
             />
-            <Button kind="ghost" label={es.common.delete} onPress={() => void remove()} />
+            <Button kind="secondary" label={es.habitForm.deleteHabit} onPress={() => void remove()} />
           </View>
         ) : null}
       </Screen>
@@ -274,4 +334,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   phase: { width: 110 },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  summary: { fontWeight: '600' },
 });

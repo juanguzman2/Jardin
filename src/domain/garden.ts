@@ -1,4 +1,4 @@
-import { addDays, daysBetween, maxDay } from './dates';
+import { addDays, daysBetween, maxDay, minDay } from './dates';
 import { checksByDate, hasFirmRoots, isFulfilled, isScheduled, weeklyTarget } from './habits';
 import type { CheckLike, HabitLike } from './types';
 
@@ -79,14 +79,16 @@ export function gardenHydration(
 
   for (const habit of habits) {
     if (habit.areaId !== area.id || habit.archived || habit.startDate > today) continue;
+    if (habit.endDate && habit.endDate < windowStart) continue; // terminó antes de la ventana
     const missWeight = hasFirmRoots(habit, checks) ? 0.5 : 1;
     const byDate = checksByDate(habit.id, checks);
     const from = maxDay(windowStart, habit.startDate);
+    const to = habit.endDate ? minDay(habit.endDate, today) : today;
 
     if (habit.frequencyType === 'times_per_week') {
       let activeDays = 0;
       let fulfilled = 0;
-      for (const day of daysBetween(from, today)) {
+      for (const day of daysBetween(from, to)) {
         const status = byDate.get(day);
         if (isFulfilled(status)) fulfilled += 1;
         if (day === today && status === undefined) continue;
@@ -100,7 +102,7 @@ export function gardenHydration(
       continue;
     }
 
-    for (const day of daysBetween(from, today)) {
+    for (const day of daysBetween(from, to)) {
       if (!isScheduled(habit, day)) continue;
       const status = byDate.get(day);
       if (day === today && status === undefined) continue;

@@ -288,7 +288,14 @@ export const es = {
     obstacleSaved: 'Anotado. Gracias por darte cuenta.',
     weekProgress: (done: number, target: number) => `${done} de ${target} esta semana`,
     clear: 'Quitar marca',
-    showArchived: 'Ver hábitos archivados',
+    options: 'Opciones del hábito',
+    archive: 'Archivar',
+    dayOf: (day: number, total: number) => `Día ${day} de ${total}`,
+    finished: 'Terminado',
+    upcoming: (date: string) => `Empieza el ${date}`,
+    showInactive: (n: number) => `Archivados, terminados o por empezar (${n})`,
+    hideInactive: 'Ocultar archivados y terminados',
+    deleteTitle: (name: string) => `¿Borrar “${name}”?`,
   },
 
   stages: {
@@ -315,11 +322,23 @@ export const es = {
     value: 'Valor al que sirve',
     valuePlaceholder: 'Ej. Cuidar mi cuerpo',
     frequency: 'Frecuencia',
-    daily: 'Diaria',
+    daily: 'Todos los días',
     weekdays: 'Días específicos',
     timesPerWeek: 'X veces por semana',
     timesPerWeekLabel: (n: number) => `${n} ${n === 1 ? 'vez' : 'veces'} por semana`,
     pickDays: 'Elige al menos un día.',
+    duration: '¿Por cuánto tiempo?',
+    durationForever: 'Sin fecha de fin',
+    durationDays: (n: number) => `${n} días`,
+    durationUntil: 'Hasta una fecha',
+    endDate: 'Último día',
+    everyDay: 'todos los días',
+    onDays: (days: string) => `los ${days}`,
+    timesWeek: (n: number) => `${n} ${n === 1 ? 'vez' : 'veces'} por semana`,
+    summary: (frequency: string, from: string, until: string | null, days: number | null) =>
+      until
+        ? `Se repite ${frequency}, desde ${from} hasta ${until} (${days} días).`
+        : `Se repite ${frequency}, desde ${from}, sin fecha de fin.`,
     minimal: 'Versión mínima',
     minimalPlaceholder: 'Ej. Una línea de gratitud',
     ifThen: 'Plan si-entonces',
@@ -341,6 +360,7 @@ export const es = {
     phasePlaceholder: 'Ej. 1',
     archive: 'Archivar hábito',
     unarchive: 'Reactivar hábito',
+    deleteHabit: 'Borrar hábito',
     deleteBody: 'Se borrarán sus checks. La planta conserva lo que ya creció.',
   },
 

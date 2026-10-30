@@ -1,4 +1,4 @@
-import { addDays, daysBetween, minDay, mondayOf, weekdayOf } from './dates';
+import { addDays, daysBetween, diffDays, minDay, mondayOf, weekdayOf } from './dates';
 import type { CheckLike, CheckStatus, HabitLike } from './types';
 
 /** 66 días: mediana para formar un hábito (Lally et al., 2010). */
@@ -34,6 +34,7 @@ export function weeklyTarget(habit: Pick<HabitLike, 'timesPerWeek'>): number {
  */
 export function isScheduled(habit: HabitLike, date: string): boolean {
   if (date < habit.startDate) return false;
+  if (habit.endDate && date > habit.endDate) return false;
   switch (habit.frequencyType) {
     case 'daily':
     case 'times_per_week':
@@ -120,17 +121,43 @@ function dailyPeriods(habit: HabitLike, byDate: Map<string, CheckStatus>, today:
 function weeklyPeriods(habit: HabitLike, byDate: Map<string, CheckStatus>, today: string): boolean[] {
   if (habit.startDate > today) return [];
   const target = weeklyTarget(habit);
+  const lastDay = lastActiveDay(habit, today);
   const firstMonday = mondayOf(habit.startDate);
-  const currentMonday = mondayOf(today);
+  const currentMonday = mondayOf(lastDay);
+  // Si el hábito ya terminó y su último día es domingo, la última semana está completa.
+  const lastWeekClosed = lastDay < today && weekdayOf(lastDay) === 7;
   const out: boolean[] = [];
   for (let monday = firstMonday; monday <= currentMonday; monday = addDays(monday, 7)) {
-    const count = fulfilledInRange(byDate, maxOf(monday, habit.startDate), minDay(addDays(monday, 6), today));
+    const count = fulfilledInRange(byDate, maxOf(monday, habit.startDate), minDay(addDays(monday, 6), lastDay));
     const met = count >= target;
-    if (!met && monday === currentMonday) continue; // semana en curso
+    if (!met && monday === currentMonday && !lastWeekClosed) continue; // semana en curso o parcial final
     if (!met && monday === firstMonday && habit.startDate !== monday) continue; // semana parcial de inicio
     out.push(met);
   }
   return out;
+}
+
+/** Último día que cuenta: hoy, o el día final si el hábito ya terminó. */
+function lastActiveDay(habit: HabitLike, today: string): string {
+  return habit.endDate ? minDay(habit.endDate, today) : today;
+}
+
+export type HabitPhase = 'upcoming' | 'active' | 'finished';
+
+/** Si el hábito aún no empieza, está en curso o ya terminó su periodo. */
+export function habitPhase(habit: Pick<HabitLike, 'startDate' | 'endDate'>, today: string): HabitPhase {
+  if (habit.startDate > today) return 'upcoming';
+  if (habit.endDate && habit.endDate < today) return 'finished';
+  return 'active';
+}
+
+/** "Día n de total" para hábitos con fecha de fin; null si no tiene fin o el día está fuera del periodo. */
+export function habitDayOf(
+  habit: Pick<HabitLike, 'startDate' | 'endDate'>,
+  day: string,
+): { day: number; total: number } | null {
+  if (!habit.endDate || day < habit.startDate || day > habit.endDate) return null;
+  return { day: diffDays(habit.startDate, day) + 1, total: diffDays(habit.startDate, habit.endDate) + 1 };
 }
 
 function maxOf(a: string, b: string): string {
@@ -175,7 +202,7 @@ export function weeklyCompliance(
   const byDate = checksByDate(habit.id, checks);
   const sunday = addDays(monday, 6);
   const from = maxOf(monday, habit.startDate);
-  const to = minDay(sunday, today);
+  const to = minDay(sunday, lastActiveDay(habit, today));
   if (from > to) return null;
 
   if (habit.frequencyType === 'times_per_week') {

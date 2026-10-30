@@ -13,22 +13,29 @@ export function DateStepper({
   value,
   onChange,
   max,
+  min,
   label,
 }: {
   value: string;
   onChange: (day: string) => void;
   max?: string;
+  min?: string;
   label: string;
 }) {
   const { c } = useTheme();
   const today = todayFn();
   const relative = relativeDayLabel(value, today);
   const atMax = max !== undefined && value >= max;
+  const atMin = min !== undefined && value <= min;
   return (
     <View style={styles.wrap}>
       <T style={styles.label}>{label}</T>
       <View style={[styles.row, { backgroundColor: c.cardAlt, borderColor: c.border }]}>
-        <IconButton accessibilityLabel={`${label}: ${es.common.previousDay}`} onPress={() => onChange(addDays(value, -1))}>
+        <IconButton
+          accessibilityLabel={`${label}: ${es.common.previousDay}`}
+          onPress={() => onChange(addDays(value, -1))}
+          disabled={atMin}
+        >
           <ChevronIcon color={c.text} direction="left" />
         </IconButton>
         <View style={styles.center} accessible accessibilityLabel={`${label}: ${formatDayLong(value)}`}>

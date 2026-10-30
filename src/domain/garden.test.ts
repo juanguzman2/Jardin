@@ -154,3 +154,17 @@ describe('areaDayStatus', () => {
     expect(areaDayStatus('salud', habits, [], '2026-03-16', '2026-03-16')).toBe('none'); // hoy
   });
 });
+
+describe('jardín con hábitos que ya terminaron', () => {
+  it('un hábito terminado no marchita el área', () => {
+    const today = '2026-03-20';
+    const ended = habit({ startDate: '2026-03-01', endDate: '2026-03-10' });
+    expect(gardenHydration({ id: 'salud' }, [ended], [], today)).toEqual({ level: 'normal', ratio: null });
+  });
+
+  it('solo cuenta los días del periodo dentro de la ventana', () => {
+    const today = '2026-03-20';
+    const ended = habit({ startDate: '2026-03-01', endDate: '2026-03-15' }); // ventana 14–20 → 14 y 15
+    expect(gardenHydration({ id: 'salud' }, [ended], seq('2026-03-14', 'd.'), today).ratio).toBe(0.5);
+  });
+});

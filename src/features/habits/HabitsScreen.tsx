@@ -6,10 +6,11 @@ import { es } from '../../copy/es';
 import { listChecks, listHabits, listObstacleNotes } from '../../db/habits';
 import { useDbQuery } from '../../db/live';
 import { listRules } from '../../db/rules';
-import { computeFlexibleStreak, isScheduled } from '../../domain/habits';
+import { computeFlexibleStreak, habitPhase, isScheduled } from '../../domain/habits';
 import { Button } from '../../ui/Button';
 import { Card, SectionTitle } from '../../ui/Card';
 import { DayNav } from '../../ui/DayNav';
+import { formatDayShort } from '../../ui/format';
 import { Screen } from '../../ui/Screen';
 import { T } from '../../ui/Text';
 import { spacing, useTheme } from '../../ui/theme';
@@ -36,7 +37,14 @@ export function HabitsScreen() {
   const { nameOf } = useAreas();
 
   const active = habits.filter((h) => !h.archived);
-  const archived = habits.filter((h) => h.archived);
+  // Archivados, con periodo ya terminado o que aún no empiezan: no salen en el riego de hoy.
+  const inactive = habits.filter((h) => h.archived || habitPhase(h, today) !== 'active');
+  const statusOf = (h: (typeof habits)[number]) =>
+    h.archived
+      ? es.common.archived
+      : habitPhase(h, today) === 'finished'
+        ? es.habits.finished
+        : es.habits.upcoming(formatDayShort(h.startDate));
   const dayHabits = active.filter((h) => isScheduled(h, day));
   const reminderOf = (ruleId: string | null) => {
     const rule = ruleId ? rules.find((r) => r.id === ruleId) : undefined;
@@ -92,24 +100,25 @@ export function HabitsScreen() {
         onPress={() => router.push({ pathname: '/habit/[id]', params: { id: 'new' } })}
       />
 
-      {archived.length > 0 ? (
+      {inactive.length > 0 ? (
         <View style={styles.archived}>
           <Button
             kind="ghost"
             small
-            label={`${es.habits.showArchived} (${archived.length})`}
+            label={showArchived ? es.habits.hideInactive : es.habits.showInactive(inactive.length)}
             onPress={() => setShowArchived(!showArchived)}
           />
           {showArchived
-            ? archived.map((h) => (
+            ? inactive.map((h) => (
                 <Pressable
                   key={h.id}
                   accessibilityRole="button"
+                  accessibilityLabel={`${es.common.edit}: ${h.name}`}
                   onPress={() => router.push({ pathname: '/habit/[id]', params: { id: h.id } })}
                   style={[styles.archivedRow, { borderColor: c.border }]}
                 >
                   <T>{h.name}</T>
-                  <T variant="small">{nameOf(h.areaId)}</T>
+                  <T variant="small">{[nameOf(h.areaId), statusOf(h)].filter(Boolean).join(' · ')}</T>
                 </Pressable>
               ))
             : null}

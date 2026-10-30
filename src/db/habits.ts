@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 
 import { countWateredDays, gardenGrowth } from '../domain/garden';
-import { isFulfilled } from '../domain/habits';
+import { isFulfilled, isScheduled } from '../domain/habits';
 import type { AutoLink, CheckStatus } from '../domain/types';
 import { db } from './client';
 import { newId } from './ids';
@@ -95,7 +95,7 @@ export function setCheckNote(habitId: string, date: string, note: string): void 
  * que estén programados ese día y no tengan ya un "hecho" o "mínimo".
  */
 export function autoMarkLinked(link: AutoLink, date: string): void {
-  const linked = listHabits().filter((h) => h.autoLink === link && h.startDate <= date);
+  const linked = listHabits().filter((h) => h.autoLink === link && isScheduled(h, date));
   for (const h of linked) {
     const existing = getCheck(h.id, date);
     if (!existing || !isFulfilled(existing.status)) setCheck(h.id, date, 'done');

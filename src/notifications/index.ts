@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { es } from '../copy/es';
-import { toBogota } from '../domain/dates';
+import { toBogota, today } from '../domain/dates';
 import { isScheduled } from '../domain/habits';
 import { getHabit, listHabits, setCheck } from '../db/habits';
 import { SETTING_KEYS, setSetting } from '../db/settings';
@@ -72,7 +72,7 @@ export async function ensurePermission(): Promise<boolean> {
 /** Reprograma todos los recordatorios para que coincidan con los hábitos guardados. */
 export async function syncHabitReminders(): Promise<void> {
   if (!notificationsSupported) return;
-  const desired = listHabits({ includeArchived: true }).flatMap(desiredReminders);
+  const desired = listHabits({ includeArchived: true }).flatMap((h) => desiredReminders(h, today()));
   const scheduled = (await Notifications.getAllScheduledNotificationsAsync()).filter((n) =>
     n.identifier.startsWith(REMINDER_ID_PREFIX),
   );
