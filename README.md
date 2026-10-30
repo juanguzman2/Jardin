@@ -29,7 +29,8 @@ npx eas-cli@latest init
 npx eas-cli@latest build -p android --profile preview
 ```
 
-Al terminar, EAS muestra un enlace y un código QR: ábrelo en el celular, descarga el APK e instálalo
+El APK se compila solo para `arm64-v8a` (todos los celulares Android de los últimos años), lo que reduce
+mucho el tiempo de compilación. Al terminar, EAS muestra un enlace y un código QR: ábrelo en el celular, descarga el APK e instálalo
 (Android pedirá permitir "instalar apps de fuentes desconocidas").
 
 ### Opción B — GitHub Actions
