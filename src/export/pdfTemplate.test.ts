@@ -37,6 +37,7 @@ describe('PDF', () => {
     }
     expect(html).toContain('Reunión &lt;tensa&gt; &amp; larga');
     expect(html).toContain('8 → 4');
+    expect(html).toContain('8:15 a. m.');
     expect(html).toContain('size: A4 landscape');
   });
 

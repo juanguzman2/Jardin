@@ -12,6 +12,7 @@ import { confirm } from '../../ui/feedback';
 import { Field } from '../../ui/Field';
 import { Screen } from '../../ui/Screen';
 import { T } from '../../ui/Text';
+import { TimeWheel } from '../../ui/TimeWheel';
 import { spacing, useTheme } from '../../ui/theme';
 import { DraftBanner } from '../common/DraftBanner';
 import { useAreas } from '../common/useAreas';
@@ -102,15 +103,10 @@ export function TimelineForm({ id, date }: { id: string; date?: string }) {
           autoFocus={isNew}
           multiline
         />
-        <Field
-          label={es.timelineForm.time}
-          help={es.timelineForm.timeHelp}
-          value={f.time}
-          onChangeText={(time) => draft.set({ time })}
-          error={errors.time}
-          keyboardType="numbers-and-punctuation"
-          maxLength={5}
-        />
+        <View style={styles.block}>
+          <T style={styles.label}>{es.timelineForm.time}</T>
+          <TimeWheel value={normalizeTime(f.time) ?? currentTime()} onChange={(time) => draft.set({ time })} shortcuts />
+        </View>
         <Field
           label={es.timelineForm.thought}
           value={f.thought}

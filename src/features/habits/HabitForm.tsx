@@ -13,11 +13,13 @@ import { ensurePermission, notificationsSupported, syncHabitReminders } from '..
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { ChoiceChips, MultiChips, ScalePicker } from '../../ui/Choice';
+import { DateStepper } from '../../ui/DateStepper';
 import { confirm } from '../../ui/feedback';
 import { Field } from '../../ui/Field';
 import { WEEKDAY_NAMES } from '../../ui/format';
 import { Screen } from '../../ui/Screen';
 import { T } from '../../ui/Text';
+import { TimeWheel } from '../../ui/TimeWheel';
 import { spacing, useTheme } from '../../ui/theme';
 import { useAreas } from '../common/useAreas';
 
@@ -197,14 +199,8 @@ export function HabitForm({ id, areaId: initialArea }: { id: string; areaId?: st
           </View>
           {reminderOn ? (
             <>
-              <Field
-                label={es.habitForm.reminderTime}
-                value={reminderTime}
-                onChangeText={setReminderTime}
-                error={errors.reminder}
-                maxLength={5}
-                keyboardType="numbers-and-punctuation"
-              />
+              <T style={styles.label}>{es.habitForm.reminderTime}</T>
+              <TimeWheel value={normalizeTime(reminderTime) ?? '20:00'} onChange={setReminderTime} />
               <T style={styles.label}>{es.habitForm.reminderDays}</T>
               <T variant="small">{es.habitForm.reminderDaysHelp}</T>
               <MultiChips options={WEEKDAY_OPTIONS} values={reminderDays} onChange={setReminderDays} />
@@ -242,17 +238,8 @@ export function HabitForm({ id, areaId: initialArea }: { id: string; areaId?: st
           />
         </View>
 
+        <DateStepper label={es.habitForm.startDate} value={startDate} onChange={setStartDate} />
         <View style={styles.row}>
-          <View style={styles.flex}>
-            <Field
-              label={es.habitForm.startDate}
-              value={startDate}
-              onChangeText={setStartDate}
-              error={errors.start}
-              maxLength={10}
-              keyboardType="numbers-and-punctuation"
-            />
-          </View>
           <View style={styles.phase}>
             <Field
               label={es.habitForm.phase}

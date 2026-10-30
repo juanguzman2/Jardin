@@ -7,7 +7,7 @@ import { generateAndSharePdf, previousWeek } from '../../export/pdf';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { toast } from '../../ui/feedback';
-import { Field } from '../../ui/Field';
+import { DateStepper } from '../../ui/DateStepper';
 import { Screen } from '../../ui/Screen';
 import { T } from '../../ui/Text';
 import { spacing, useTheme } from '../../ui/theme';
@@ -79,14 +79,8 @@ export function ExportPdfScreen() {
             }}
           />
         </View>
-        <View style={styles.row}>
-          <View style={styles.flex}>
-            <Field label={es.pdf.from} value={from} onChangeText={setFrom} maxLength={10} keyboardType="numbers-and-punctuation" />
-          </View>
-          <View style={styles.flex}>
-            <Field label={es.pdf.to} value={to} onChangeText={setTo} maxLength={10} keyboardType="numbers-and-punctuation" />
-          </View>
-        </View>
+        <DateStepper label={es.pdf.from} value={from} onChange={setFrom} max={to} />
+        <DateStepper label={es.pdf.to} value={to} onChange={setTo} max={today} />
         {error ? <T variant="small">{error}</T> : null}
       </Card>
       <Card>

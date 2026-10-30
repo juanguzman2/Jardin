@@ -1,6 +1,6 @@
 import { es } from '../copy/es';
 import type { Direction } from '../domain/types';
-import { formatDayNumeric, formatDayShort } from '../ui/format';
+import { formatDayNumeric, formatDayShort, formatTime12 } from '../ui/format';
 
 /*
  * Plantilla HTML del PDF para la psicóloga (A4 horizontal).
@@ -86,13 +86,13 @@ const STYLE = `
 function recordsTable(rows: PdfRecordRow[]): string {
   const c = es.pdf.cols;
   if (rows.length === 0) return `<p class="empty">${escapeHtml(es.pdf.noRecords)}</p>`;
-  const widths = [7, 5, 14, 12.5, 12.5, 12.5, 14, 8, 14.5];
+  const widths = [7, 6.5, 14, 12.5, 12, 12.5, 13.5, 8, 14];
   const head = [c.date, c.time, c.context, c.body, c.thought, c.action, c.longTerm, c.intensity, c.rule];
   const body = rows
     .map(
       (r) => `<tr>
         <td>${escapeHtml(formatDayNumeric(r.date))}</td>
-        <td class="num">${escapeHtml(r.time)}</td>
+        <td class="num">${escapeHtml(formatTime12(r.time))}</td>
         <td>${escapeHtml(r.context)}</td>
         <td>${escapeHtml(r.body)}</td>
         <td>${escapeHtml(r.thought)}</td>
@@ -113,7 +113,7 @@ function timelineTable(rows: PdfTimelineRow[]): string {
     .map(
       (r) => `<tr>
         <td>${escapeHtml(formatDayNumeric(r.date))}</td>
-        <td class="num">${escapeHtml(r.time)}</td>
+        <td class="num">${escapeHtml(formatTime12(r.time))}</td>
         <td>${escapeHtml(r.activity)}</td>
         <td>${escapeHtml(r.thought)}</td>
         <td class="${r.direction ?? ''}">${r.direction ? escapeHtml(DIRECTION_MARK[r.direction]) : ''}</td>
@@ -121,7 +121,7 @@ function timelineTable(rows: PdfTimelineRow[]): string {
       </tr>`,
     )
     .join('');
-  return `<table><colgroup><col style="width:8%"><col style="width:6%"><col style="width:34%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
+  return `<table><colgroup><col style="width:8%"><col style="width:7.5%"><col style="width:32.5%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
     <thead><tr><th>${escapeHtml(es.pdf.cols.date)}</th><th>${escapeHtml(es.pdf.cols.time)}</th><th>${escapeHtml(es.timelineForm.activity)}</th><th>${escapeHtml(es.timelineForm.thought)}</th><th>${escapeHtml(`${es.direction.toward} / ${es.direction.away}`)}</th><th>${escapeHtml(es.common.area)}</th></tr></thead>
     <tbody>${body}</tbody></table>`;
 }

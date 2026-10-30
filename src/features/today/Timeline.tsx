@@ -10,6 +10,7 @@ import type { Direction } from '../../domain/types';
 import { ActionMenu } from '../../ui/ActionMenu';
 import { Card, SectionTitle } from '../../ui/Card';
 import { confirm } from '../../ui/feedback';
+import { formatTime12 } from '../../ui/format';
 import { T } from '../../ui/Text';
 import { radius, spacing, useTheme } from '../../ui/theme';
 import { useAreas } from '../common/useAreas';
@@ -54,14 +55,17 @@ export function Timeline({ items }: { items: TimelineItem[] }) {
             >
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${item.time} ${item.activity}`}
+                accessibilityLabel={`${formatTime12(item.time)} ${item.activity}`}
                 onPress={() => edit(item)}
                 onLongPress={() => setMenuFor(item)}
                 style={({ pressed }) => [styles.itemMain, { opacity: pressed ? 0.7 : 1 }]}
               >
-                <T style={styles.time} color={c.muted}>
-                  {item.time}
-                </T>
+                <View style={styles.time}>
+                  <T style={styles.timeMain} color={c.muted}>
+                    {formatTime12(item.time).split(' ')[0]}
+                  </T>
+                  <T variant="small">{formatTime12(item.time).split(' ').slice(1).join(' ')}</T>
+                </View>
                 <View style={styles.itemBody}>
                   <T>{item.activity}</T>
                   {item.thought ? (
@@ -128,7 +132,8 @@ const styles = StyleSheet.create({
   list: { paddingVertical: spacing.xs, gap: 0 },
   item: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.md },
   itemMain: { flex: 1, flexDirection: 'row', gap: spacing.md },
-  time: { width: 48, fontVariant: ['tabular-nums'], fontWeight: '600' },
+  time: { width: 54, alignItems: 'flex-start' },
+  timeMain: { fontVariant: ['tabular-nums'], fontWeight: '600' },
   itemBody: { flex: 1, gap: spacing.xs },
   thought: { fontStyle: 'italic' },
   meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },

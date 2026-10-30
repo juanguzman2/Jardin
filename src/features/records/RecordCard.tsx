@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { es } from '../../copy/es';
 import type { FunctionalRecord } from '../../db/schema';
 import { isoToBogota } from '../../domain/dates';
-import { formatMoment } from '../../ui/format';
+import { formatMoment, formatTime12 } from '../../ui/format';
 import { T } from '../../ui/Text';
 import { radius, spacing, useTheme } from '../../ui/theme';
 
@@ -23,7 +23,7 @@ export function RecordRow({
   action?: string;
 }) {
   const { c } = useTheme();
-  const when = showDate ? formatMoment(record.occurredAt) : isoToBogota(record.occurredAt).time;
+  const when = showDate ? formatMoment(record.occurredAt) : formatTime12(isoToBogota(record.occurredAt).time);
   const hasIntensity = record.intensityBefore !== null || record.intensityAfter !== null;
   return (
     <Pressable

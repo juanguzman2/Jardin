@@ -66,6 +66,17 @@ export const es = {
     archived: 'Archivado',
   },
 
+  time: {
+    hour: 'Horas',
+    minutes: 'Minutos',
+    period: 'a. m. / p. m.',
+    am: 'a. m.',
+    pm: 'p. m.',
+    now: 'Ahora',
+    ago: (minutes: number) => (minutes >= 60 ? `Hace ${minutes / 60} h` : `Hace ${minutes} min`),
+    selected: (label: string) => `${label} (elegido)`,
+  },
+
   direction: {
     toward: 'Me acerca',
     away: 'Me aleja',
@@ -155,7 +166,7 @@ export const es = {
     newTitle: 'Momento de malestar',
     editTitle: 'Auto-registro',
     when: 'Fecha y hora',
-    date: 'Fecha (AAAA-MM-DD)',
+    date: 'Fecha',
     invalidDate: 'Revisa la fecha y la hora.',
     context: '¿Qué pasó?',
     contextPlaceholder: 'El contexto, en pocas palabras',
@@ -325,7 +336,7 @@ export const es = {
     autoLinkNone: 'Nada',
     autoLinkOpening: 'La apertura',
     autoLinkClosing: 'El cierre',
-    startDate: 'Fecha de inicio (AAAA-MM-DD)',
+    startDate: 'Fecha de inicio',
     phase: 'Fase del plan',
     phasePlaceholder: 'Ej. 1',
     archive: 'Archivar hábito',
@@ -387,8 +398,8 @@ export const es = {
   pdf: {
     screenTitle: 'PDF para la psicóloga',
     range: 'Rango de fechas',
-    from: 'Desde (AAAA-MM-DD)',
-    to: 'Hasta (AAAA-MM-DD)',
+    from: 'Desde',
+    to: 'Hasta',
     lastWeek: 'Semana anterior',
     thisWeek: 'Esta semana',
     invalidRange: 'Revisa las fechas.',
